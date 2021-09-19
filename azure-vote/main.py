@@ -20,10 +20,10 @@ from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.tracer import Tracer
 from opencensus.ext.flask.flask_middleware import FlaskMiddleware
 from applicationinsights import TelemetryClient
-
 # Logging
-ConnectionString = 'InstrumentationKey=InstrumentationKey=155fb713-8f7c-455b-951d-d97fc483dd4e'
-# ;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/
+
+ConnectionString = 'InstrumentationKey=631ce12b-249b-400b-b9a3-e538f0787908;IngestionEndpoint=https://westus-0.in.applicationinsights.azure.com/'
+
 logger = logging.getLogger(__name__)
 logger.addHandler(
     AzureEventHandler(
@@ -71,7 +71,20 @@ else:
     title = app.config['TITLE']
 
 # Redis Connection
-r = redis.Redis()
+# r = redis.Redis()
+redis_server = os.environ['REDIS']
+
+# Redis Connection to another container
+try:
+    if "REDIS_PWD" in os.environ:
+        r = redis.StrictRedis(host=redis_server,
+                        port=6379,
+                        password=os.environ['REDIS_PWD'])
+    else:
+        r = redis.Redis(redis_server)
+    r.ping()
+except redis.ConnectionError:
+    exit('Failed to connect to Redis, terminating.')
 
 # Change title to host name to demo NLB
 if app.config['SHOWHOST'] == "true":
